@@ -246,6 +246,38 @@ namespace AutoBuild
                 {
                     EditorUtility.SetDirty(config);
                     AssetDatabase.SaveAssets();
+                    SyncToEnvFile();
+                }
+                
+                EditorGUILayout.Space(5);
+                
+                // App Store Connect API Key
+                EditorGUILayout.LabelField("App Store Connect API Key", EditorStyles.miniBoldLabel);
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    config.ascKeyId = EditorGUILayout.TextField("Key ID", config.ascKeyId);
+                    config.ascIssuerId = EditorGUILayout.TextField("Issuer ID", config.ascIssuerId);
+                    
+                    EditorGUILayout.BeginHorizontal();
+                    config.ascKeyFilePath = EditorGUILayout.TextField("AuthKey 路径", config.ascKeyFilePath);
+                    if (GUILayout.Button("选择", GUILayout.Width(60)))
+                    {
+                        string path = EditorUtility.OpenFilePanel("选择 AuthKey 文件", "", "p8");
+                        if (!string.IsNullOrEmpty(path))
+                        {
+                            config.ascKeyFilePath = path;
+                            EditorUtility.SetDirty(config);
+                            SyncToEnvFile();
+                        }
+                    }
+                    EditorGUILayout.EndHorizontal();
+                }
+                
+                if (EditorGUI.EndChangeCheck())
+                {
+                    EditorUtility.SetDirty(config);
+                    AssetDatabase.SaveAssets();
+                    SyncToEnvFile();
                 }
                 
                 EditorGUILayout.Space(5);
@@ -358,6 +390,47 @@ namespace AutoBuild
                 "build android    完整 Android 流程\n\n" +
                 "首次使用需确保 ~/.local/bin 在 PATH 中", 
                 MessageType.Info);
+        }
+        private void SyncToEnvFile()
+        {
+            if (config == null) return;
+            
+            var projectRoot = AutoBuildConfig.ProjectRoot;
+            var ciDir = Path.Combine(projectRoot, ".ci");
+            var envPath = Path.Combine(ciDir, ".env");
+            
+            if (!Directory.Exists(ciDir))
+            {
+                Directory.CreateDirectory(ciDir);
+            }
+            
+            var sb = new System.Text.StringBuilder();
+            sb.AppendLine("# 非敏感配置由 AutoBuild 自动生成");
+            sb.AppendLine($"# 更新时间: {System.DateTime.Now}");
+            sb.AppendLine();
+            
+            sb.AppendLine("# Telegram 通知");
+            sb.AppendLine($"TELEGRAM_BOT_TOKEN={config.telegramBotToken}");
+            sb.AppendLine($"TELEGRAM_CHAT_ID={config.telegramChatId}");
+            sb.AppendLine();
+            
+            sb.AppendLine("# R2 上传 (Cloudflare R2)");
+            sb.AppendLine("R2_UPLOADER_URL=https://pan-temp.your-domain.com");
+            sb.AppendLine();
+            
+            sb.AppendLine("# Android Keystore 签名密码");
+            sb.AppendLine($"KEYSTORE_PASSWORD={config.keystorePassword}");
+            sb.AppendLine($"KEY_PASSWORD={config.keyAliasPassword}");
+            sb.AppendLine();
+            
+            sb.AppendLine("# App Store Connect API Key (TestFlight 上传)");
+            sb.AppendLine($"ASC_KEY_ID={config.ascKeyId}");
+            sb.AppendLine($"ASC_ISSUER_ID={config.ascIssuerId}");
+            sb.AppendLine($"ASC_KEY_FILE=\"{config.ascKeyFilePath}\"");
+            
+            File.WriteAllText(envPath, sb.ToString());
+            // 确保文件只对当前用户可读写 (600)
+            // System.Diagnostics.Process.Start("chmod", $"600 \"{envPath}\"");
         }
     }
 }
