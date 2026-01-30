@@ -34,13 +34,31 @@
 
 ### 1. 安装
 
-将此仓库内容复制到你的 Unity 项目根目录。
-
-### 2. 安装依赖
+**方式 A: 直接克隆 (推荐)**
 
 ```bash
-# macOS
-brew install fastlane gdrive
+cd 你的Unity项目根目录
+
+# 克隆到临时目录并复制
+git clone https://github.com/cnaron/unity-autobuild.git temp-autobuild
+cp -r temp-autobuild/Assets/Editor/AutoBuild ./Assets/Editor/
+cp -r temp-autobuild/.ci ./
+rm -rf temp-autobuild
+```
+
+**方式 B: 手动下载**
+
+1. 下载 [Release ZIP](https://github.com/cnaron/unity-autobuild/releases)
+2. 解压并复制 `Assets/Editor/AutoBuild/` 到项目
+3. 复制 `.ci/` 文件夹到项目根目录
+
+> ⚠️ **安全说明**: 仓库不包含任何敏感信息，`.env.example` 是空模板。你需要创建自己的 `.ci/.env` 并填入你的 Token。
+
+### 2. 安装依赖 (macOS)
+
+```bash
+brew install fastlane
+# gdrive 可选，用于 Android 上传 Google Drive
 ```
 
 ### 3. 配置环境变量
