@@ -81,6 +81,49 @@ detect_unity() {
     log_warning "使用默认 Unity: $UNITY_PATH"
 }
 
+# 预检查: 磁盘空间
+check_disk_space() {
+    local required_mb=5000  # 需要至少 5GB 可用空间
+    local available_mb=$(df -m "$PROJECT_ROOT" | awk 'NR==2 {print $4}')
+    
+    if [ "$available_mb" -lt "$required_mb" ]; then
+        log_error "磁盘空间不足! 需要至少 ${required_mb}MB，当前可用: ${available_mb}MB"
+        exit 1
+    fi
+    log_info "磁盘空间检查通过 (可用: ${available_mb}MB)"
+}
+
+# 预检查: Android 签名配置
+check_android_signing() {
+    if [ -z "$KEYSTORE_PASSWORD" ]; then
+        log_warning "未设置 KEYSTORE_PASSWORD 环境变量，将使用项目默认配置"
+    fi
+}
+
+# 自动关闭正在运行的 Unity 编辑器
+close_unity_if_running() {
+    # 检测是否有 Unity 进程正在使用此项目
+    local unity_pid=$(pgrep -f "Unity.*-projectPath.*$(basename "$PROJECT_ROOT")" 2>/dev/null || true)
+    
+    if [ -n "$unity_pid" ]; then
+        log_warning "检测到 Unity 正在运行此项目 (PID: $unity_pid)"
+        log_info "正在自动关闭 Unity 编辑器..."
+        
+        # 优雅关闭 (给 Unity 5秒保存)
+        kill -TERM $unity_pid 2>/dev/null || true
+        sleep 3
+        
+        # 如果还在运行，强制关闭
+        if ps -p $unity_pid > /dev/null 2>&1; then
+            log_warning "Unity 未响应，强制关闭..."
+            kill -9 $unity_pid 2>/dev/null || true
+            sleep 2
+        fi
+        
+        log_success "Unity 已关闭"
+    fi
+}
+
 # 显示帮助
 show_help() {
     echo "用法: $0 <platform> [options]"
@@ -294,6 +337,10 @@ main() {
     
     log_info "项目路径: $PROJECT_ROOT"
     log_info "Unity 路径: $UNITY_PATH"
+    
+    # 预检查
+    check_disk_space
+    close_unity_if_running
     
     # 执行构建
     case $PLATFORM in

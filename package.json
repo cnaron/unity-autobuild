@@ -1,0 +1,24 @@
+{
+    "name": "com.cnaron.autobuild",
+    "displayName": "Unity AutoBuild",
+    "version": "1.0.0",
+    "unity": "2019.4",
+    "description": "一键式 Unity CI/CD 自动构建系统。支持 iOS TestFlight 上传、Android R2/Drive 上传、Telegram 通知。",
+    "author": {
+        "name": "cnaron",
+        "url": "https://github.com/cnaron"
+    },
+    "keywords": [
+        "ci",
+        "cd",
+        "build",
+        "ios",
+        "android",
+        "testflight",
+        "automation"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/cnaron/unity-autobuild.git"
+    }
+}

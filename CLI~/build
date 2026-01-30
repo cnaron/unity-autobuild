@@ -1,0 +1,49 @@
+#!/bin/bash
+# =============================================================================
+# Unity AutoBuild 简化命令入口
+# 用法: build ios / build android
+# 
+# 安装方法:
+#   1. 复制此脚本到 /usr/local/bin/ 或 ~/.local/bin/
+#   2. chmod +x /usr/local/bin/build
+#   3. 在任意 Unity 项目目录下直接执行 build ios
+# =============================================================================
+
+set -e
+
+# 查找项目根目录 (包含 ProjectSettings 的目录)
+find_project_root() {
+    local dir="$PWD"
+    while [[ "$dir" != "/" ]]; do
+        if [[ -d "$dir/ProjectSettings" && -d "$dir/Assets" ]]; then
+            echo "$dir"
+            return 0
+        fi
+        dir="$(dirname "$dir")"
+    done
+    return 1
+}
+
+PROJECT_ROOT=$(find_project_root)
+
+if [[ -z "$PROJECT_ROOT" ]]; then
+    echo "❌ 错误: 当前目录不在 Unity 项目中"
+    echo "   请 cd 到 Unity 项目目录后再运行"
+    exit 1
+fi
+
+BUILD_SCRIPT="$PROJECT_ROOT/.ci/build.sh"
+
+if [[ ! -f "$BUILD_SCRIPT" ]]; then
+    echo "❌ 错误: 未找到构建脚本 .ci/build.sh"
+    echo "   请确保已安装 Unity AutoBuild 包"
+    echo ""
+    echo "   安装方法:"
+    echo "   1. Unity Package Manager → Add from git URL"
+    echo "   2. 输入: https://github.com/cnaron/unity-autobuild.git"
+    exit 1
+fi
+
+# 传递所有参数给 build.sh
+cd "$PROJECT_ROOT"
+exec "$BUILD_SCRIPT" "$@"
