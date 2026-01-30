@@ -223,10 +223,80 @@ namespace AutoBuild
             {
                 EditorGUILayout.ObjectField("配置文件", config, typeof(AutoBuildConfig), false);
                 
+                EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("编辑配置"))
                 {
                     Selection.activeObject = config;
                 }
+                
+                // 导出配置
+                if (GUILayout.Button("📤 导出配置"))
+                {
+                    ExportConfig();
+                }
+                
+                // 导入配置
+                if (GUILayout.Button("📥 导入配置"))
+                {
+                    ImportConfig();
+                }
+                EditorGUILayout.EndHorizontal();
+            }
+        }
+        
+        private void ExportConfig()
+        {
+            if (config == null) return;
+            
+            var path = EditorUtility.SaveFilePanel(
+                "导出 AutoBuild 配置",
+                "",
+                "autobuild-config.json",
+                "json"
+            );
+            
+            if (string.IsNullOrEmpty(path)) return;
+            
+            var json = JsonUtility.ToJson(config, true);
+            File.WriteAllText(path, json);
+            
+            EditorUtility.DisplayDialog("导出成功", 
+                $"配置已导出到:\n{path}\n\n可用于其他项目导入。", "确定");
+        }
+        
+        private void ImportConfig()
+        {
+            var path = EditorUtility.OpenFilePanel(
+                "导入 AutoBuild 配置",
+                "",
+                "json"
+            );
+            
+            if (string.IsNullOrEmpty(path)) return;
+            
+            if (!File.Exists(path))
+            {
+                EditorUtility.DisplayDialog("错误", "文件不存在!", "确定");
+                return;
+            }
+            
+            var json = File.ReadAllText(path);
+            
+            // 如果配置文件不存在，先创建
+            if (config == null)
+            {
+                CreateConfig();
+                LoadConfig();
+            }
+            
+            if (config != null)
+            {
+                JsonUtility.FromJsonOverwrite(json, config);
+                EditorUtility.SetDirty(config);
+                AssetDatabase.SaveAssets();
+                
+                EditorUtility.DisplayDialog("导入成功", 
+                    "配置已从文件导入!\n\n请检查配置是否正确。", "确定");
             }
         }
 

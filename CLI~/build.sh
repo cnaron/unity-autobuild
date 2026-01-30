@@ -273,12 +273,12 @@ build_android() {
     # 读取下载链接
     DOWNLOAD_URL=$(cat /tmp/last_r2_url.txt 2>/dev/null || echo "")
     
-    # 发送通知
+    # 发送通知 (使用 Markdown 格式的链接)
     "$SCRIPT_DIR/notify.sh" "🤖 Android APK 构建并上传成功
 
-📦 文件: $APK_NAME
+📦 文件: \`$APK_NAME\`
 💾 大小: ${APK_SIZE} MB
-📥 下载: $DOWNLOAD_URL"
+📥 下载: [点击下载]($DOWNLOAD_URL)"
     
     log_success "=== Android 构建流程完成 ==="
 }

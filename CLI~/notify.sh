@@ -48,7 +48,7 @@ RESPONSE=$(curl -s -X POST \
     "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/sendMessage" \
     -d "chat_id=$TELEGRAM_CHAT_ID" \
     -d "text=$FULL_MESSAGE" \
-    -d "parse_mode=HTML")
+    -d "parse_mode=Markdown")
 
 # 检查响应
 if echo "$RESPONSE" | grep -q '"ok":true'; then

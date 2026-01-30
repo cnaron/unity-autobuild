@@ -85,10 +85,70 @@ namespace AutoBuild
                 {
                     System.Diagnostics.Process.Start("chmod", $"+x \"{file}\"");
                 }
+                
+                // 安装全局 build 命令
+                InstallGlobalBuildCommand(ciPath);
                 #endif
                 
                 Debug.Log("[AutoBuild] CLI 脚本已安装到 .ci/ 目录");
             }
+        }
+        
+        /// <summary>
+        /// 安装全局 build 命令到 ~/.local/bin
+        /// </summary>
+        private static void InstallGlobalBuildCommand(string ciPath)
+        {
+            string homeDir = System.Environment.GetFolderPath(System.Environment.SpecialFolder.UserProfile);
+            string localBinPath = System.IO.Path.Combine(homeDir, ".local", "bin");
+            string globalBuildPath = System.IO.Path.Combine(localBinPath, "build");
+            
+            // 创建目录
+            if (!System.IO.Directory.Exists(localBinPath))
+            {
+                System.IO.Directory.CreateDirectory(localBinPath);
+            }
+            
+            // 创建全局 build 脚本
+            string buildScript = @"#!/bin/bash
+# Unity AutoBuild 全局命令
+# 自动检测项目根目录并调用 .ci/build.sh
+
+find_project_root() {
+    local dir=""$PWD""
+    while [[ ""$dir"" != ""/"" ]]; do
+        if [[ -d ""$dir/ProjectSettings"" && -d ""$dir/Assets"" ]]; then
+            echo ""$dir""
+            return 0
+        fi
+        dir=""$(dirname ""$dir"")""
+    done
+    return 1
+}
+
+PROJECT_ROOT=$(find_project_root)
+
+if [[ -z ""$PROJECT_ROOT"" ]]; then
+    echo ""❌ 错误: 当前目录不在 Unity 项目中""
+    exit 1
+fi
+
+BUILD_SCRIPT=""$PROJECT_ROOT/.ci/build.sh""
+
+if [[ ! -f ""$BUILD_SCRIPT"" ]]; then
+    echo ""❌ 错误: 未找到 .ci/build.sh""
+    exit 1
+fi
+
+cd ""$PROJECT_ROOT""
+exec ""$BUILD_SCRIPT"" ""$@""
+";
+            
+            System.IO.File.WriteAllText(globalBuildPath, buildScript);
+            System.Diagnostics.Process.Start("chmod", $"+x \"{globalBuildPath}\"");
+            
+            Debug.Log($"[AutoBuild] 全局 build 命令已安装到 {globalBuildPath}");
+            Debug.Log("[AutoBuild] 如果 ~/.local/bin 不在 PATH 中，请添加: export PATH=\"$HOME/.local/bin:$PATH\"");
         }
         
         private static string GetPackagePath()
