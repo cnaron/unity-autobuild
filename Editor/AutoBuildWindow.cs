@@ -210,10 +210,9 @@ namespace AutoBuild
             
             if (config == null)
             {
-                EditorGUILayout.HelpBox("未找到配置文件，将使用默认设置。\n点击下方按钮创建配置文件。", 
-                    MessageType.Info);
+                EditorGUILayout.HelpBox("未找到配置文件，点击下方按钮创建。", MessageType.Info);
                 
-                if (GUILayout.Button("创建配置文件"))
+                if (GUILayout.Button("创建配置文件", GUILayout.Height(30)))
                 {
                     CreateConfig();
                     LoadConfig();
@@ -221,21 +220,42 @@ namespace AutoBuild
             }
             else
             {
-                EditorGUILayout.ObjectField("配置文件", config, typeof(AutoBuildConfig), false);
+                EditorGUI.BeginChangeCheck();
                 
-                EditorGUILayout.BeginHorizontal();
-                if (GUILayout.Button("编辑配置"))
+                // Android 签名配置
+                EditorGUILayout.LabelField("Android 签名", EditorStyles.miniBoldLabel);
+                using (new EditorGUI.IndentLevelScope())
                 {
-                    Selection.activeObject = config;
+                    config.keystorePath = EditorGUILayout.TextField("Keystore 路径", config.keystorePath);
+                    config.keystorePassword = EditorGUILayout.PasswordField("Keystore 密码", config.keystorePassword);
+                    config.keyAliasName = EditorGUILayout.TextField("Key Alias", config.keyAliasName);
+                    config.keyAliasPassword = EditorGUILayout.PasswordField("Key 密码", config.keyAliasPassword);
                 }
                 
-                // 导出配置
+                EditorGUILayout.Space(5);
+                
+                // Telegram 通知
+                EditorGUILayout.LabelField("Telegram 通知", EditorStyles.miniBoldLabel);
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    config.telegramBotToken = EditorGUILayout.TextField("Bot Token", config.telegramBotToken);
+                    config.telegramChatId = EditorGUILayout.TextField("Chat ID", config.telegramChatId);
+                }
+                
+                if (EditorGUI.EndChangeCheck())
+                {
+                    EditorUtility.SetDirty(config);
+                    AssetDatabase.SaveAssets();
+                }
+                
+                EditorGUILayout.Space(5);
+                
+                // 导入/导出按钮
+                EditorGUILayout.BeginHorizontal();
                 if (GUILayout.Button("📤 导出配置"))
                 {
                     ExportConfig();
                 }
-                
-                // 导入配置
                 if (GUILayout.Button("📥 导入配置"))
                 {
                     ImportConfig();
@@ -333,11 +353,10 @@ namespace AutoBuild
             EditorGUILayout.LabelField("CLI 命令", EditorStyles.boldLabel);
             
             EditorGUILayout.HelpBox(
-                "可在终端使用以下命令进行无界面构建:\n\n" +
-                "iOS:\n" +
-                "./.ci/build.sh ios\n\n" +
-                "Android:\n" +
-                "./.ci/build.sh android", 
+                "在终端 cd 到项目目录后执行:\n\n" +
+                "build ios        完整 iOS 流程\n" +
+                "build android    完整 Android 流程\n\n" +
+                "首次使用需确保 ~/.local/bin 在 PATH 中", 
                 MessageType.Info);
         }
     }
