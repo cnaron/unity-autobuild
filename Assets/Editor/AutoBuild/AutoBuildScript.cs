@@ -76,24 +76,27 @@ namespace AutoBuild
         {
             Log("=== 开始 Android 构建 ===");
             
+            // 切换到 Android 平台 (如果尚未切换)
+            if (EditorUserBuildSettings.activeBuildTarget != BuildTarget.Android)
+            {
+                Log("切换到 Android 平台...");
+                EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Android, BuildTarget.Android);
+            }
+            
             var config = LoadOrCreateConfig();
             var outputPath = config?.GetAndroidBuildAbsolutePath() ?? Path.Combine(ProjectRoot, DEFAULT_ANDROID_PATH);
             
             // 确保输出目录存在
             EnsureDirectoryExists(outputPath);
             
-            // 可选：自增版本号
-            if (config != null && config.autoIncrementBuildNumber)
-            {
-                IncrementBuildNumber(BuildTargetGroup.Android);
-            }
-            
-            // 设置输出文件名
+            // Android 不自动递增版本号，使用项目已有版本
             var bundleId = PlayerSettings.GetApplicationIdentifier(BuildTargetGroup.Android);
             var version = PlayerSettings.bundleVersion;
             var buildNumber = PlayerSettings.Android.bundleVersionCode;
             var extension = (config?.androidBuildOptions.buildAppBundle == true) ? "aab" : "apk";
-            var fileName = $"{bundleId.Split('.').Last()}_{version}_{buildNumber}.{extension}";
+            // 文件命名格式: [内部版本号.MMdd.HHmm]
+            var timestamp = DateTime.Now.ToString("MMdd.HHmm");
+            var fileName = $"{buildNumber}.{timestamp}.{extension}";
             var fullPath = Path.Combine(outputPath, fileName);
             
             // 构建选项
@@ -106,11 +109,30 @@ namespace AutoBuild
             // App Bundle 设置
             EditorUserBuildSettings.buildAppBundle = config?.androidBuildOptions.buildAppBundle ?? false;
             
+            // 配置签名 - 从环境变量读取密码
+            var keystorePass = Environment.GetEnvironmentVariable("KEYSTORE_PASSWORD");
+            var keyAliasPass = Environment.GetEnvironmentVariable("KEY_PASSWORD") ?? keystorePass;
+            if (!string.IsNullOrEmpty(keystorePass))
+            {
+                PlayerSettings.Android.keystorePass = keystorePass;
+                PlayerSettings.Android.keyaliasPass = keyAliasPass;
+                Log("已从环境变量设置 keystore 密码");
+            }
+            else
+            {
+                Log("[警告] 未设置 KEYSTORE_PASSWORD 环境变量，可能导致签名失败");
+            }
+            
+            // 确保 ARMv7 + ARM64 双架构
+            PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARMv7 | AndroidArchitecture.ARM64;
+            Log($"目标架构: ARMv7 + ARM64");
+            
             // 获取启用的场景
             var scenes = GetEnabledScenes();
             Log($"构建场景: {string.Join(", ", scenes)}");
             Log($"输出路径: {fullPath}");
             Log($"Bundle ID: {bundleId}");
+            Log($"版本: {version} (Build {buildNumber})");
             
             // 执行构建
             var report = BuildPipeline.BuildPlayer(new BuildPlayerOptions

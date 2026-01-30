@@ -17,14 +17,17 @@ namespace AutoBuild
         public string androidBuildPath = "Builds/Android";
 
         [Header("=== Android 签名配置 ===")]
-        [Tooltip("使用 PlayerSettings 中的 keystore 配置")]
-        public bool usePlayerSettingsKeystore = true;
-        
-        [Tooltip("自定义 keystore 路径 (仅当 usePlayerSettingsKeystore = false 时生效)")]
+        [Tooltip("Keystore 文件路径 (绝对路径或相对于项目根目录)")]
         public string keystorePath = "";
         
-        [Tooltip("keystore 别名")]
-        public string keyAlias = "";
+        [Tooltip("Keystore 密码")]
+        public string keystorePassword = "";
+        
+        [Tooltip("Key 别名")]
+        public string keyAliasName = "";
+        
+        [Tooltip("Key 密码 (留空则使用 Keystore 密码)")]
+        public string keyAliasPassword = "";
 
         [Header("=== 通知配置 ===")]
         [Tooltip("Telegram Bot Token (留空则不发送通知)")]

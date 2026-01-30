@@ -166,6 +166,15 @@ build_ios() {
 build_android() {
     log_info "=== 开始 Android 构建流程 ==="
     
+    # 加载环境变量
+    if [ -f "$SCRIPT_DIR/.env" ]; then
+        source "$SCRIPT_DIR/.env"
+    fi
+    
+    # 传递 keystore 密码给 Unity
+    export KEYSTORE_PASSWORD
+    export KEY_PASSWORD="${KEY_PASSWORD:-$KEYSTORE_PASSWORD}"
+    
     local log_file="$LOG_DIR/build_android_$TIMESTAMP.log"
     log_info "日志文件: $log_file"
     
@@ -186,19 +195,47 @@ build_android() {
     
     log_success "APK 构建完成"
     
+    # 查找生成的 APK 文件
+    APK_FILE=$(find "$PROJECT_ROOT/Builds/Android" -name "*.apk" -type f -mmin -5 2>/dev/null | head -1)
+    
+    if [ -z "$APK_FILE" ]; then
+        log_error "未找到新生成的 APK 文件"
+        exit 1
+    fi
+    
+    APK_NAME=$(basename "$APK_FILE")
+    APK_SIZE=$(($(stat -f%z "$APK_FILE" 2>/dev/null || stat -c%s "$APK_FILE") / 1024 / 1024))
+    log_info "APK 文件: $APK_NAME ($APK_SIZE MB)"
+    
     if [ "$UNITY_ONLY" == "true" ] || [ "$NO_UPLOAD" == "true" ]; then
         log_success "构建完成 (跳过上传)"
+        "$SCRIPT_DIR/notify.sh" "🤖 Android APK 构建完成
+
+📦 文件: $APK_NAME
+💾 大小: ${APK_SIZE} MB"
         return
     fi
     
-    # Step 2: 上传 Google Drive
-    log_info "Step 2/2: 上传 Google Drive..."
-    "$SCRIPT_DIR/upload_gdrive.sh" "$PROJECT_ROOT/Builds/Android" || {
-        log_warning "Google Drive 上传失败 (非致命错误)"
+    # Step 2: 上传 R2
+    log_info "Step 2/2: 上传 R2..."
+    "$SCRIPT_DIR/upload_r2.sh" "$APK_FILE" || {
+        log_warning "R2 上传失败"
+        "$SCRIPT_DIR/notify.sh" "⚠️ Android APK 构建成功但上传失败
+
+📦 文件: $APK_NAME
+💾 大小: ${APK_SIZE} MB"
+        return
     }
     
+    # 读取下载链接
+    DOWNLOAD_URL=$(cat /tmp/last_r2_url.txt 2>/dev/null || echo "")
+    
     # 发送通知
-    "$SCRIPT_DIR/notify.sh" "🤖 Android APK 构建完成"
+    "$SCRIPT_DIR/notify.sh" "🤖 Android APK 构建并上传成功
+
+📦 文件: $APK_NAME
+💾 大小: ${APK_SIZE} MB
+📥 下载: $DOWNLOAD_URL"
     
     log_success "=== Android 构建流程完成 ==="
 }
