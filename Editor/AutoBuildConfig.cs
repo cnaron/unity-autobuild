@@ -35,6 +35,16 @@ namespace AutoBuild
         
         [Tooltip("Telegram Chat ID")]
         public string telegramChatId = "";
+        
+        [Header("=== App Store Connect API Key (TestFlight) ===")]
+        [Tooltip("Key ID (例如: D383SF739)")]
+        public string ascKeyId = "";
+        
+        [Tooltip("Issuer ID (例如: 69a6de78-xxx...)")]
+        public string ascIssuerId = "";
+        
+        [Tooltip("AuthKey 文件路径 (.p8)")]
+        public string ascKeyFilePath = "";
 
         [Header("=== 高级选项 ===")]
         [Tooltip("构建前是否自增版本号")]
