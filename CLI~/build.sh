@@ -175,6 +175,17 @@ build_ios() {
         log_success "Unity Xcode 导出完成"
     fi
     
+    # [Fix] 强制修复出口合规证明 (无论 Unity PostProcess 是否成功)
+    PLIST_PATH="$PROJECT_ROOT/Builds/iOS/Info.plist"
+    if [ -f "$PLIST_PATH" ]; then
+        log_info "正在配置 Info.plist 出口合规证明..."
+        # 设置 ITSAppUsesNonExemptEncryption = NO (false)
+        plutil -replace ITSAppUsesNonExemptEncryption -bool NO "$PLIST_PATH"
+        log_success "Info.plist 已更新: ITSAppUsesNonExemptEncryption = NO"
+    else
+        log_warning "未找到 Info.plist: $PLIST_PATH"
+    fi
+    
     if [ "$UNITY_ONLY" == "true" ]; then
         log_success "Unity 构建完成 (--unity-only 模式)"
         return
@@ -253,9 +264,9 @@ build_android() {
     if [ "$UNITY_ONLY" == "true" ] || [ "$NO_UPLOAD" == "true" ]; then
         log_success "构建完成 (跳过上传)"
         "$SCRIPT_DIR/notify.sh" "🤖 Android APK 构建完成
-
-📦 文件: $APK_NAME
-💾 大小: ${APK_SIZE} MB"
+    
+    📦 文件: $APK_NAME
+    💾 大小: ${APK_SIZE} MB"
         return
     fi
     
@@ -264,9 +275,9 @@ build_android() {
     "$SCRIPT_DIR/upload_r2.sh" "$APK_FILE" || {
         log_warning "R2 上传失败"
         "$SCRIPT_DIR/notify.sh" "⚠️ Android APK 构建成功但上传失败
-
-📦 文件: $APK_NAME
-💾 大小: ${APK_SIZE} MB"
+    
+    📦 文件: $APK_NAME
+    💾 大小: ${APK_SIZE} MB"
         return
     }
     
@@ -275,10 +286,10 @@ build_android() {
     
     # 发送通知 (使用代码块格式的链接方便复制)
     "$SCRIPT_DIR/notify.sh" "🤖 Android APK 构建并上传成功
-
-📦 文件: \`$APK_NAME\`
-💾 大小: ${APK_SIZE} MB
-📥 下载: \`$DOWNLOAD_URL\`"
+    
+    📦 文件: \`$APK_NAME\`
+    💾 大小: ${APK_SIZE} MB
+    📥 下载: \`$DOWNLOAD_URL\`"
     
     log_success "=== Android 构建流程完成 ==="
 }
@@ -293,9 +304,11 @@ main() {
     DRY_RUN="false"
     
     while [[ $# -gt 0 ]]; do
-        case $1 in
+        # 转换为小写进行匹配
+        local arg=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+        case $arg in
             ios|android|all)
-                PLATFORM="$1"
+                PLATFORM="$arg"
                 shift
                 ;;
             --unity-only)
