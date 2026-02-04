@@ -164,24 +164,6 @@ exec ""$BUILD_SCRIPT"" ""$@""
             return null;
         }
         
-        /// <summary>
-        /// 手动重新安装 CLI 脚本
-        /// </summary>
-        [MenuItem("Tools/AutoBuild/重新安装 CLI 脚本")]
-        public static void ReinstallCLI()
-        {
-            InstallCLIScripts();
-            EditorUtility.DisplayDialog("完成", "CLI 脚本已重新安装到 .ci/ 目录", "确定");
-        }
-        
-        /// <summary>
-        /// 重置首次安装标记 (用于测试)
-        /// </summary>
-        [MenuItem("Tools/AutoBuild/重置安装状态 (测试用)")]
-        public static void ResetInstallState()
-        {
-            EditorPrefs.DeleteKey(INSTALL_KEY);
-            Debug.Log("[AutoBuild] 安装状态已重置，重启编辑器将再次显示欢迎弹窗");
-        }
+
     }
 }
