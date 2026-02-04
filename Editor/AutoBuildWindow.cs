@@ -81,6 +81,9 @@ namespace AutoBuild
             EditorGUILayout.Space(10);
             
             DrawCLICommands();
+            EditorGUILayout.Space(10);
+            
+            DrawUpdateSection();
             
             EditorGUILayout.EndScrollView();
         }
@@ -399,6 +402,65 @@ namespace AutoBuild
                 "build android    完整 Android 流程\n\n" +
                 "首次使用需确保 ~/.local/bin 在 PATH 中", 
                 MessageType.Info);
+        }
+
+        private void DrawUpdateSection()
+        {
+            GUILayout.FlexibleSpace();
+            EditorGUILayout.LabelField("", GUI.skin.horizontalSlider);
+            
+            EditorGUILayout.BeginHorizontal();
+            
+            // 显示当前版本信息
+            string currentInfo = $"当前版本: {AutoBuildUpdater.CurrentVersion}";
+            if (AutoBuildUpdater.CurrentCommitHash != "Unknown")
+            {
+                currentInfo += $" ({AutoBuildUpdater.CurrentCommitHash})";
+            }
+            EditorGUILayout.LabelField(currentInfo, EditorStyles.miniLabel);
+            
+            // 检查更新按钮
+            if (AutoBuildUpdater.IsChecking)
+            {
+                EditorGUILayout.LabelField("正在检查...", EditorStyles.miniLabel, GUILayout.Width(70));
+            }
+            else
+            {
+                if (GUILayout.Button("检查更新", EditorStyles.miniButton, GUILayout.Width(70)))
+                {
+                    AutoBuildUpdater.CheckForUpdates();
+                }
+            }
+            
+            EditorGUILayout.EndHorizontal();
+            
+            // 如果有更新，显示更新按钮
+            if (AutoBuildUpdater.HasUpdate)
+            {
+                GUI.backgroundColor = new Color(0.4f, 1f, 0.4f);
+                EditorGUILayout.BeginHorizontal(EditorStyles.helpBox);
+                
+                GUILayout.Label($"发现新版本: {AutoBuildUpdater.LatestVersion}", EditorStyles.boldLabel);
+                GUILayout.FlexibleSpace();
+                
+                if (GUILayout.Button("立即更新", GUILayout.Width(80)))
+                {
+                    if (EditorUtility.DisplayDialog("确认更新", 
+                        "即将更新 AutoBuild 包到最新版本。\n\nUnity 将会重新编译，可能会短暂卡顿。", 
+                        "更新", "取消"))
+                    {
+                        AutoBuildUpdater.UpdatePackage();
+                    }
+                }
+                
+                EditorGUILayout.EndHorizontal();
+                GUI.backgroundColor = Color.white;
+            }
+            else if (!string.IsNullOrEmpty(AutoBuildUpdater.LastCheckTime))
+            {
+                EditorGUILayout.LabelField($"已是最新 (检查于 {AutoBuildUpdater.LastCheckTime})", 
+                    EditorStyles.centeredGreyMiniLabel);
+            }
         }
         private void SyncToEnvFile()
         {
