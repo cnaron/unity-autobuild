@@ -35,6 +35,10 @@ namespace AutoBuild
         
         [Tooltip("Telegram Chat ID")]
         public string telegramChatId = "";
+
+        [Header("=== R2 上传配置 ===")]
+        [Tooltip("R2 Uploader 服务地址 (例如: https://pan-temp.your-domain.com)")]
+        public string r2UploaderUrl = "";
         
         [Header("=== App Store Connect API Key (TestFlight) ===")]
         [Tooltip("Key ID (例如: D383SF739)")]

@@ -242,6 +242,15 @@ namespace AutoBuild
                     config.telegramChatId = EditorGUILayout.TextField("Chat ID", config.telegramChatId);
                 }
                 
+                EditorGUILayout.Space(5);
+
+                // R2 上传配置
+                EditorGUILayout.LabelField("R2 上传 (Cloudflare)", EditorStyles.miniBoldLabel);
+                using (new EditorGUI.IndentLevelScope())
+                {
+                    config.r2UploaderUrl = EditorGUILayout.TextField("Worker URL", config.r2UploaderUrl);
+                }
+                
                 if (EditorGUI.EndChangeCheck())
                 {
                     EditorUtility.SetDirty(config);
@@ -415,7 +424,7 @@ namespace AutoBuild
             sb.AppendLine();
             
             sb.AppendLine("# R2 上传 (Cloudflare R2)");
-            sb.AppendLine("R2_UPLOADER_URL=https://pan-temp.your-domain.com");
+            sb.AppendLine($"R2_UPLOADER_URL={config.r2UploaderUrl}");
             sb.AppendLine();
             
             sb.AppendLine("# Android Keystore 签名密码");
